@@ -1,4 +1,7 @@
-import tkinter as tk
+try:
+    import tkinter as tk
+except ModuleNotFoundError:
+    tk = None
 import random
 import time
 
@@ -54,6 +57,27 @@ sentences = [
 # Global variables
 start_time = 0
 selected_sentence = ""
+root = None
+sentence_label = None
+entry = None
+result_label = None
+
+
+def calculate_wpm(typed_text, elapsed_seconds):
+    if elapsed_seconds <= 0:
+        return 0
+    word_count = len(typed_text.strip().split())
+    return round((word_count / elapsed_seconds) * 60)
+
+
+def build_result_message(typed_text, target_sentence, elapsed_seconds):
+    if typed_text.strip() == "":
+        return "Please type something!"
+
+    wpm = calculate_wpm(typed_text, elapsed_seconds)
+    if typed_text.strip() == target_sentence:
+        return f"Correct! Your typing speed is {wpm} WPM."
+    return f"Incorrect! You typed {wpm} WPM."
 
 # Function to start the test
 def start_test():
@@ -66,46 +90,52 @@ def start_test():
 
 # Function to check typing speed
 def check_speed():
+    if start_time == 0 or selected_sentence == "":
+        result_label.config(text="Click 'Start Test' first!")
+        return
+
     end_time = time.time()
     typed_text = entry.get()
     time_taken = end_time - start_time
 
-    if typed_text.strip() == "":
-        result_label.config(text="Please type something!")
-        return
+    result_label.config(text=build_result_message(typed_text, selected_sentence, time_taken))
 
-    word_count = len(typed_text.strip().split())
-    wpm = round((word_count / time_taken) * 60)
 
-    if typed_text.strip() == selected_sentence:
-        result = f"Correct! Your typing speed is {wpm} WPM."
-    else:
-        result = f"Incorrect! You typed {wpm} WPM."
+def create_ui():
+    global root, sentence_label, entry, result_label
+    if tk is None:
+        raise RuntimeError("Tkinter is not available in this Python environment.")
 
-    result_label.config(text=result)
-    # Create main window
-root = tk.Tk()
-root.title("Typing Speed Test")
-root.geometry("600x300")
-root.config(bg="white")
+    root = tk.Tk()
+    root.title("Typing Speed Test")
+    root.geometry("600x300")
+    root.config(bg="white")
 
-# GUI Components
-instruction = tk.Label(root, text="Click 'Start Test' and type the sentence as fast as you can.", bg="white")
-instruction.pack(pady=10)
+    instruction = tk.Label(root, text="Click 'Start Test' and type the sentence as fast as you can.", bg="white")
+    instruction.pack(pady=10)
 
-sentence_label = tk.Label(root, text="", font=("Arial", 14), wraplength=500, bg="white")
-sentence_label.pack(pady=10)
+    sentence_label = tk.Label(root, text="", font=("Arial", 14), wraplength=500, bg="white")
+    sentence_label.pack(pady=10)
 
-entry = tk.Entry(root, font=("Arial", 12), width=70)
-entry.pack(pady=10)
+    entry = tk.Entry(root, font=("Arial", 12), width=70)
+    entry.pack(pady=10)
 
-start_btn = tk.Button(root, text="Start Test", command=start_test, bg="#4CAF50", fg="white")
-start_btn.pack(pady=5)
+    start_btn = tk.Button(root, text="Start Test", command=start_test, bg="#4CAF50", fg="white")
+    start_btn.pack(pady=5)
 
-check_btn = tk.Button(root, text="Check Speed", command=check_speed, bg="#2196F3", fg="white")
-check_btn.pack(pady=5)
+    check_btn = tk.Button(root, text="Check Speed", command=check_speed, bg="#2196F3", fg="white")
+    check_btn.pack(pady=5)
 
-result_label = tk.Label(root, text="", font=("Arial", 12), fg="black", bg="white")
-result_label.pack(pady=10)
+    result_label = tk.Label(root, text="", font=("Arial", 12), fg="black", bg="white")
+    result_label.pack(pady=10)
 
-root.mainloop()
+    return root
+
+
+def run_app():
+    app = create_ui()
+    app.mainloop()
+
+
+if __name__ == "__main__":
+    run_app()
